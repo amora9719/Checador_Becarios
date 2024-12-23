@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checador de Horas para Becarios</title>
+    <!-- Agrega los enlaces a Bootstrap CSS y JS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.4/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.4/dist/sweetalert2.all.min.js"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .container {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            margin-top: 50px;
+        }
+
+        h2 {
+            color: #61dafb;
+        }
+
+        label {
+            font-weight: bold;
+            color: #61dafb;
+        }
+
+        .btn-primary,
+        .btn-success {
+            width: 48%;
+        }
+
+        .btn-success {
+            margin-left: 4%;
+        }
+
+        .table {
+            margin-top: 20px;
+        }
+
+        .table-dark,
+        .table-dark th,
+        .table-dark td {
+            background-color: #1e1e1e;
+            border-color: #343a40;
+        }
+
+        .table-dark thead th {
+            color: #61dafb;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2 class="mb-4">Checador de Horas para Becarios</h2>
+
+        <!-- Formulario único para registrar entrada y salida -->
+        <form>
+            <div class="mb-3">
+                <label for="nombreBecario" class="form-label">Nombre del Becario:</label>
+                <select class="form-select" id="nombreBecario" required>
+                    <option value="Boris González">Boris González</option>
+                    <option value="Victoria Fuentes">Victoria Fuentes</option>
+                    <!-- Agrega más opciones según la cantidad de personas -->
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-primary" onclick="registrarHora('entrada')">Registrar Hora de
+                    Entrada</button>
+                <button type="button" class="btn btn-success" onclick="registrarHora('salida')">Registrar Hora de
+                    Salida</button>
+            </div>
+        </form>
+
+        <!-- <div class="mt-4">
+            <h3>Registro de Horas</h3>
+            <table class="table table-bordered table-dark">
+                <thead>
+                    <tr>
+                        <th scope="col">Nombre del Becario</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Hora de Entrada</th>
+                        <th scope="col">Hora de Salida</th>
+                    </tr>
+                </thead>
+                <tbody id="registroHorasBody">
+                     Aquí se mostrarán los registros de horas 
+                </tbody>
+            </table>
+        </div> -->
+    </div>
+
+    <script>
+        function obtenerFechaActual() {
+            var ahora = new Date();
+            return ahora.toLocaleDateString();
+        }
+
+        function obtenerFechaHoraActual() {
+            var ahora = new Date();
+            var opciones = { timeZone: 'America/Mexico_City', hour12: false };
+            return ahora.toLocaleString('es-MX', opciones);
+        }
+
+        function buscarRegistroExistente(nombreBecario, fecha) {
+            var registros = document.getElementById("registroHorasBody").rows;
+
+            for (var i = 0; i < registros.length; i++) {
+                var nombreActual = registros[i].cells[0].innerHTML;
+                var fechaActual = registros[i].cells[1].innerHTML;
+
+                if (nombreActual === nombreBecario && fechaActual === fecha) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        function mostrarSweetAlert(icon, title, text) {
+            Swal.fire({
+                icon: icon,
+                title: title,
+                text: text,
+            });
+        }
+
+        function registrarHora(tipo) {
+            var nombreBecario = document.getElementById("nombreBecario").value;
+
+            if (!nombreBecario) {
+                mostrarSweetAlert('error', 'Oops...', 'Por favor, selecciona un becario antes de registrar la hora.');
+                return;
+            }
+
+            // Realizar solicitud AJAX
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "insertar_registro.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var respuesta = JSON.parse(xhr.responseText);
+
+                    if (respuesta.success) {
+                        // Registro exitoso
+                        mostrarSweetAlert('success', 'Registro Exitoso', respuesta.message);
+                    } else {
+                        // Error en el registro
+                        mostrarSweetAlert('error', 'Error', respuesta.message);
+                    }
+                }
+            };
+
+            // Enviar datos al servidor
+            var datos = "nombre=" + encodeURIComponent(nombreBecario) +
+                "&tipo=" + encodeURIComponent(tipo);
+
+            xhr.send(datos);
+
+            document.getElementById("nombreBecario").value = "";
+        }
+    </script>
+
+</body>
+
+</html>
